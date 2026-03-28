@@ -1,9 +1,5 @@
 $(document).ready(function () {
 
-    // const myModal = new bootstrap.Modal(document.getElementById('myModal'), {
-    //     keyboard: false
-    // });
-
     $(document).on('submit', '#stuForm', function (e) {
         e.preventDefault();
 
@@ -61,54 +57,62 @@ $(document).ready(function () {
                 success: function (data) {
 
                     if (data.status === 'error') {
-                        // Show errors under specific fields
                         if (data.errors.name) $('#nameError').text(data.errors.name);
                         if (data.errors.age) $('#ageError').text(data.errors.age);
                         if (data.errors.sub) $('#subError').text(data.errors.sub);
+                        
+                        if (data.errors.database) {
+                            toastr.error(data.errors.database);
+                        } else {
+                            toastr.error("Please fix the validation errors.");
+                        }
                     } else {
                         if (data.data.status === 'add') {
                             $('#stuForm')[0].reset();
+                            
+                            if (document.activeElement) {
+                                document.activeElement.blur();
+                            }
+                            
                             $('#myModal').modal('hide');
+                            toastr.success("Data added successfully.");
 
-                            $('#taskData').append(`<tr id="row_ ${data.data.id}">
-                            <td>${data.data.id}</td>
-                            <td>${data.data.name}</td>
-                            <td>${data.data.age}</td>
-                            <td>${data.data.sub}</td>
-                            <td><a class="btn btn-primary mx-2 update_data" data-id="${data.data.id}">Update</a>
-                                <a class="btn btn-danger mx-2 delete_data" data-id="${data.data.id}">Delete</a>
-
-                        </td>
-
-                            </tr>`);
+                            $('#taskData').append(`<tr id="row_${data.data.id}">
+                                    <td>${data.data.id}</td>
+                                    <td>${data.data.name}</td>
+                                    <td>${data.data.age}</td>
+                                    <td>${data.data.sub}</td>
+                                    <td>
+                                        <a href="#" class="btn btn-primary btn-sm update_data" data-id="${data.data.id}">Edit</a>
+                                        <a href="#" class="btn btn-danger btn-sm delete_data" data-id="${data.data.id}">Delete</a>
+                                    </td>
+                                </tr>`);
                         }
                         if (data.data.status === 'updated') {
+                            toastr.success("Data updated successfully.");
                             var newRow = "";
-                            var newRow = `<tr id="row_ ${data.data.id}">
-                            <td>${data.data.id}</td>
-                            <td>${data.data.name}</td>
-                            <td>${data.data.age}</td>
-                            <td>${data.data.sub}</td>
-                            <td><a class="btn btn-primary mx-2 update_data" data-id="${data.data.id}">Update</a>
-                                <a class="btn btn-danger mx-2 delete_data" data-id="${data.data.id}">Delete</a>
-
-                        </td>
-
-                            </tr>`
+                            var newRow = `<tr id="row_${data.data.id}">
+                                    <td>${data.data.id}</td>
+                                    <td>${data.data.name}</td>
+                                    <td>${data.data.age}</td>
+                                    <td>${data.data.sub}</td>
+                                    <td>
+                                        <a href="#" class="btn btn-primary btn-sm update_data" data-id="${data.data.id}">Edit</a>
+                                        <a href="#" class="btn btn-danger btn-sm delete_data" data-id="${data.data.id}">Delete</a>
+                                    </td>
+                                </tr>`
                             $("#row_" + data.data.id).replaceWith(newRow);
+                            
+                            if (document.activeElement) {
+                                document.activeElement.blur();
+                            }
+                            
                             $('#myModal').modal('hide');
-
-
-
                         }
-
-
                     }
                 },
                 error: function (response) {
-                    // console.log(response);
-                    // return;
-                    alert("Something went wrong on the server.");
+                    toastr.error("Something went wrong on the server.");
                 }
 
 
@@ -166,12 +170,20 @@ $(document).ready(function () {
             dataType: 'json',
             success: function (data) {
                 console.log(data);
-                if (data.raw == '1') {
+                if (data.status === 'success') {
                     row.remove();
-                    // toastr.success(`${data.message}`);
-                } else if (data.raw == '0') {
-                    // toastr.error(`${data.message}`);
+                    toastr.success('Data deleted successfully!');
+                } else if (data.status === 'error') {
+                    toastr.error(data.errors && data.errors.database ? data.errors.database : 'Error deleting data!');
+                } else if (data.raw == '1') {
+                    row.remove();
+                    toastr.success('Data deleted successfully!');
+                } else {
+                    toastr.error('Error deleting data!');
                 }
+            },
+            error: function () {
+                toastr.error("Something went wrong on the server.");
             }
         });
     });

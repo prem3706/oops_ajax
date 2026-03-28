@@ -3,14 +3,12 @@ include "database.php";
 $obj = new database();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $name = $age = $sub = "";
-    if (isset($_POST['add'])) {
-        //    print_r($_POST);
-        //     exit();
+    $response = [];
 
-        $name = $_POST['name'];
-        $age = $_POST['age'];
-        $sub = $_POST['sub'];
+    if (isset($_POST['add'])) {
+        $name = $_POST['name'] ?? '';
+        $age = $_POST['age'] ?? '';
+        $sub = $_POST['sub'] ?? '';
 
         if (empty($name)) $response['errors']['name'] = "Name is required.";
         if (empty($age))  $response['errors']['age'] = "Age is required.";
@@ -18,43 +16,48 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if (!empty($response['errors'])) {
             $response['status'] = 'error';
+            echo json_encode($response);
+            exit();
         } else {
-            $obj->insert('student', ['name' => "$name", 'age' => "$age", 'sub' => "$sub"]);
-            $addid = $obj->addNo;
-            $responseData = [
-                'data' => [
-                    'status'=>'add',
-                    'id' => $addid,
-                    'name' => $name,
-                    'age' => $age,
-                    'sub' => $sub,
-                ]
-            ];
-
-
-            echo json_encode($responseData);
-
+            if ($obj->insert('student', ['name' => $name, 'age' => $age, 'sub' => $sub])) {
+                $addid = $obj->addNo;
+                $responseData = [
+                    'data' => [
+                        'status' => 'add',
+                        'id' => $addid,
+                        'name' => $name,
+                        'age' => $age,
+                        'sub' => $sub,
+                    ]
+                ];
+                echo json_encode($responseData);
+            } else {
+                $response['status'] = 'error';
+                $response['errors']['database'] = $obj->getError();
+                echo json_encode($response);
+            }
             exit();
         }
     }
 
     if (isset($_POST['delete_id'])) {
         $id = $_POST['delete_id'];
-        $obj->delete('student', "id='$id'");
-        $response['raw'] = $obj->deleteNo;
+        if ($obj->delete('student', "id='$id'")) {
+            $response['status'] = 'success';
+            $response['raw'] = $obj->deleteNo;
+        } else {
+            $response['status'] = 'error';
+            $response['errors']['database'] = $obj->getError();
+        }
         echo json_encode($response);
         exit();
     }
 
     if (isset($_POST['update'])) {
-        $name = $age = $sub = "";
-        //    print_r($_POST);
-        //     exit();
-
-        $name = $_POST['name'];
-        $age = $_POST['age'];
-        $sub = $_POST['sub'];
-        $id = $_POST['id'];
+        $name = $_POST['name'] ?? '';
+        $age = $_POST['age'] ?? '';
+        $sub = $_POST['sub'] ?? '';
+        $id = $_POST['id'] ?? '';
 
         if (empty($name)) $response['errors']['name'] = "Name is required.";
         if (empty($age))  $response['errors']['age'] = "Age is required.";
@@ -62,26 +65,26 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if (!empty($response['errors'])) {
             $response['status'] = 'error';
+            echo json_encode($response);
+            exit();
         } else {
-            $obj->update('student',['name' => "$name", 'age' => "$age", 'sub' => "$sub"],"id=$id");
-            $responseData = [
-                'data' => [
-                    'status'=>'updated',
-                    'id' => $id,
-                    'name' => $name,
-                    'age' => $age,
-                    'sub' => $sub,
-                ]
-            ];
-
-
-            echo json_encode($responseData);
-
+            if ($obj->update('student', ['name' => $name, 'age' => $age, 'sub' => $sub], "id='$id'")) {
+                $responseData = [
+                    'data' => [
+                        'status' => 'updated',
+                        'id' => $id,
+                        'name' => $name,
+                        'age' => $age,
+                        'sub' => $sub,
+                    ]
+                ];
+                echo json_encode($responseData);
+            } else {
+                $response['status'] = 'error';
+                $response['errors']['database'] = $obj->getError();
+                echo json_encode($response);
+            }
             exit();
         }
-
-
-
-
     }
 }
