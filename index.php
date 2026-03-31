@@ -2,9 +2,6 @@
 include "header.php";
 include "database.php";
 
-$obj = new database();
-$obj->select('student', '*', null, null, null, null);
-$result = $obj->getResult();
 ?>
 
 <div class="container mt-5">
@@ -25,25 +22,7 @@ $result = $obj->getResult();
                 </tr>
             </thead>
             <tbody id="taskData">
-                <?php
-                if (!empty($result)) {
-                    foreach ($result as $row) { ?>
-                        <tr id="row_<?php echo $row['id']; ?>">
-                            <td><?php echo $row['id']; ?></td>
-                            <td><?php echo $row['name']; ?></td>
-                            <td><?php echo $row['age']; ?></td>
-                            <td><?php echo $row['sub']; ?></td>
-                            <td>
-                                <a href="#" class="btn btn-primary btn-sm update_data" data-id="<?php echo $row['id']; ?>">Edit</a>
-                                <a href="#" class="btn btn-danger btn-sm delete_data" data-id="<?php echo $row['id']; ?>">Delete</a>
-                            </td>
-                        </tr>
-                    <?php }
-                } else { ?>
-                    <tr>
-                        <td colspan="5" class="text-center">No Record Found</td>
-                    </tr>
-                <?php } ?>
+                
             </tbody>
         </table>
     </div>

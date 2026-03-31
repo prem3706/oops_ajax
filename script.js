@@ -1,5 +1,43 @@
 $(document).ready(function () {
 
+    // show data in table and fetch
+
+    function getResult() {
+        $.ajax({
+            url: 'auth.php',
+            method: 'POST',
+            data: { action: 'getData' },
+            dataType: 'json',
+            success: function (response) {
+                var html = '';
+                if (response.length > 0) {
+                    $.each(response, function (index, row) {
+                        html += `<tr id="row_${row.id}">
+                                    <td>${row.id}</td>
+                                    <td>${row.name}</td>
+                                    <td>${row.age}</td>
+                                    <td>${row.sub}</td>
+                                    <td>
+                                        <a href="#" class="btn btn-primary btn-sm update_data" data-id="${row.id}">Edit</a>
+                                        <a href="#" class="btn btn-danger btn-sm delete_data" data-id="${row.id}">Delete</a>
+                                    </td>
+                                </tr>`;
+                    });
+                } else {
+                    html = '<tr><td colspan="5" class="text-center">No Data Found</td></tr>';
+                }
+
+
+                $('#taskData').html(html);
+            }
+        });
+    }
+
+    // show data while document run
+    getResult();
+
+    // create and update from submition
+
     $(document).on('submit', '#stuForm', function (e) {
         e.preventDefault();
 
@@ -60,7 +98,7 @@ $(document).ready(function () {
                         if (data.errors.name) $('#nameError').text(data.errors.name);
                         if (data.errors.age) $('#ageError').text(data.errors.age);
                         if (data.errors.sub) $('#subError').text(data.errors.sub);
-                        
+
                         if (data.errors.database) {
                             toastr.error(data.errors.database);
                         } else {
@@ -69,50 +107,28 @@ $(document).ready(function () {
                     } else {
                         if (data.data.status === 'add') {
                             $('#stuForm')[0].reset();
-                            
+
                             if (document.activeElement) {
                                 document.activeElement.blur();
                             }
-                            
-                            $('#myModal').modal('hide');
-                            toastr.success("Data added successfully.");
 
-                            $('#taskData').append(`<tr id="row_${data.data.id}">
-                                    <td>${data.data.id}</td>
-                                    <td>${data.data.name}</td>
-                                    <td>${data.data.age}</td>
-                                    <td>${data.data.sub}</td>
-                                    <td>
-                                        <a href="#" class="btn btn-primary btn-sm update_data" data-id="${data.data.id}">Edit</a>
-                                        <a href="#" class="btn btn-danger btn-sm delete_data" data-id="${data.data.id}">Delete</a>
-                                    </td>
-                                </tr>`);
+                            $('#myModal').modal('hide');
+                            toastr.success(data.data.message);
+                            getResult();
+
                         }
                         if (data.data.status === 'updated') {
-                            toastr.success("Data updated successfully.");
-                            var newRow = "";
-                            var newRow = `<tr id="row_${data.data.id}">
-                                    <td>${data.data.id}</td>
-                                    <td>${data.data.name}</td>
-                                    <td>${data.data.age}</td>
-                                    <td>${data.data.sub}</td>
-                                    <td>
-                                        <a href="#" class="btn btn-primary btn-sm update_data" data-id="${data.data.id}">Edit</a>
-                                        <a href="#" class="btn btn-danger btn-sm delete_data" data-id="${data.data.id}">Delete</a>
-                                    </td>
-                                </tr>`
-                            $("#row_" + data.data.id).replaceWith(newRow);
-                            
+                            toastr.success(data.data.message);
+                            getResult();
+
+
                             if (document.activeElement) {
                                 document.activeElement.blur();
                             }
-                            
+
                             $('#myModal').modal('hide');
                         }
                     }
-                },
-                error: function (response) {
-                    toastr.error("Something went wrong on the server.");
                 }
 
 
@@ -122,7 +138,7 @@ $(document).ready(function () {
     });
 
 
-
+    // modal open when click on add button
     $(document).on("click", ".add", function () {
         $.ajax({
             url: "addData.php",
@@ -138,6 +154,9 @@ $(document).ready(function () {
             }
         })
     });
+
+    // modal open when click on update button 
+
 
     $(document).on("click", ".update_data", function (e) {
         e.preventDefault();
@@ -157,34 +176,43 @@ $(document).ready(function () {
         })
     })
 
+    //delete data and fecth data
+
     $(document).on("click", ".delete_data", function (e) {
         e.preventDefault();
 
         var deleteID = $(this).attr('data-id');
-        var row = $(this).closest('tr');
 
-        $.ajax({
-            url: 'auth.php',
-            method: "POST",
-            data: { "delete_id": deleteID },
-            dataType: 'json',
-            success: function (data) {
-                console.log(data);
-                if (data.status === 'success') {
-                    row.remove();
-                    toastr.success('Data deleted successfully!');
-                } else if (data.status === 'error') {
-                    toastr.error(data.errors && data.errors.database ? data.errors.database : 'Error deleting data!');
-                } else if (data.raw == '1') {
-                    row.remove();
-                    toastr.success('Data deleted successfully!');
-                } else {
-                    toastr.error('Error deleting data!');
-                }
-            },
-            error: function () {
-                toastr.error("Something went wrong on the server.");
+        Swal.fire({
+            title: "Are you sure?",
+            text: "You won't be able to revert this!",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#3085d6",
+            cancelButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!"
+        }).then((result) => {
+            if (result.isConfirmed) {
+                
+                $.ajax({
+                    url: 'auth.php',
+                    method: "POST",
+                    data: { "delete_id": deleteID },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.status === 'success' || data.raw == '1') {
+                            getResult(); // Refresh your list
+                            Swal.fire("Deleted!", data.message || "Your file has been deleted.", "success");
+                        } else {
+                            toastr.error(data.errors ? data.errors.database : 'Error deleting data!');
+                        }
+                    },
+                    error: function () {
+                        toastr.error("Server error. Please try again.");
+                    }
+                });
             }
-        });
-    });
+        })
+    
+    })
 })

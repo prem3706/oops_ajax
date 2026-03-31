@@ -4,7 +4,7 @@ class database
 {
     private $db_host = "localhost";
     private $db_user = "root";
-    private $db_pass = "";
+    private $db_pass = "password";
     private $db_name = "oops_crud";
 
     private $conn = false;
@@ -13,6 +13,8 @@ class database
     private $error = "";
     public $deleteNo = null;
     public $addNo = null;
+
+    // database connection
 
     public function __construct()
     {
@@ -27,6 +29,8 @@ class database
         }
         return true;
     }
+
+    //insert student data
 
     public function insert($table, $params = array())
     {
@@ -48,6 +52,8 @@ class database
         return false;
     }
 
+    //show result of student data
+
     public function getResult()
     {
         $val = $this->result;
@@ -55,10 +61,14 @@ class database
         return $val;
     }
 
+    // get error of all methods
+
     public function getError()
     {
         return $this->error;
     }
+
+    // fetch student data
 
     public function select($table, $rows = "*", $join = null, $where = null, $order = null, $limit = null)
     {
@@ -82,6 +92,8 @@ class database
         return false;
     }
 
+    // delete student data
+
     public function delete($table, $where = null)
     {
         if ($this->tableExist($table)) {
@@ -99,6 +111,8 @@ class database
         }
         return false;
     }
+
+    // update student data
 
     public function update($table, $params = array(), $where = null)
     {
@@ -121,6 +135,8 @@ class database
         return false;
     }
 
+    //check table exist or not
+
     private function tableExist($table)
     {
         if (!$this->conn) {
@@ -136,6 +152,8 @@ class database
             return false;
         }
     }
+
+    // close connection of database
 
     public function __destruct()
     {
